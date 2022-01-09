@@ -1,6 +1,5 @@
 class_name NavQuadTree
-
-enum Direction{NW, NE, SW, SE, N, S, W, E}
+extends NavClusterGraph
 
 class QuadCell extends NavCluster:
 	var traversable: bool = false
@@ -22,12 +21,16 @@ class QuadCell extends NavCluster:
 		return id.substr(id.length()/2, -1)
 
 var leaf_cells := {}
+var clusters := {}
 var base_cell: QuadCell
 
 var traversable_map_tiles = []
 
 func get_cluster(id: String):
 	return leaf_cells.get(id)
+
+func get_clusters_dict():
+	return clusters
 
 func get_cluster_containing_coord(coordv: Vector2):
 	# check if the coord is contained in the tree
@@ -40,6 +43,8 @@ func get_cluster_containing_coord(coordv: Vector2):
 
 func get_child_containing_coord(coordv: Vector2, cell: QuadCell):
 	if(cell.children == null || cell.children.size() == 0):
+		if(cell.traversable == false):
+			return null
 		return cell
 	
 	var west : bool
@@ -114,6 +119,7 @@ func process_cell(cell: QuadCell):
 	else:
 		if(traversable_found):
 			cell.traversable = true
+			clusters[cell.id] = cell
 		cell.leaf = true
 		leaf_cells[cell.id] = cell
 
@@ -139,8 +145,6 @@ func subdivide_cell(cell: QuadCell):
 		var subcell_11 = QuadCell.new(id_11, cell.topleft + Vector2(cell.dim.x/2, cell.dim.y/2), cell.dim/2)
 		subcell_11.parent = cell
 		cell.children[Direction.SE] = subcell_11
-
-
 
 func get_neighbor_of_greator_or_equal_size(cell: QuadCell, direction: int):
 	if(cell.parent == null):

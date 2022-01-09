@@ -1,8 +1,6 @@
 class_name AStarClusters
 
-
-
-static func A_Star(start: NavCluster, goal: NavCluster):
+static func run(start: NavCluster, goal: NavCluster):
 	var open_set := [start]
 	
 	var came_from := {}

@@ -3,104 +3,141 @@ extends Node2D
 onready var tile_map: TileMap = get_node("TileMap")
 onready var draw_node = get_node("DrawNode")
 
-var leaf_cells := {}
-var used_map_tiles := []
 var tile_dim: Vector2
 
-var pos: Vector2
-var dim: int
+enum GRAPH_TYPE{RECTANGLES, QUADTREE, NONE}
 
-var quad_tree: NavQuadTree
+var cluster_graphs := {}
+var cluster_path := []
+var current_graph = GRAPH_TYPE.RECTANGLES
 
-var start_cell: NavQuadTree.QuadCell
-var end_cell: NavQuadTree.QuadCell
+var start_coord: Vector2
+var end_coord: Vector2
 
-var path: Array = []
+var start_cluster: NavCluster
+var end_cluster: NavCluster
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	tile_dim = tile_map.get_cell_size()
 	tile_map.show_behind_parent = true
 	
-	quad_tree = NavQuadTree.new()
-	quad_tree.build_from_tilemap(tile_map)
+	#rect_expansion = NavRectExpansion.new();
 	
-	dim = quad_tree.base_cell.dim.x
-	pos = quad_tree.base_cell.topleft
+	cluster_graphs[GRAPH_TYPE.RECTANGLES] = NavRectExpansion.new()
+	cluster_graphs[GRAPH_TYPE.QUADTREE] = NavQuadTree.new()
+	cluster_graphs[GRAPH_TYPE.NONE] = FakeNavClusterGraph.new()
+	
+	for graph in cluster_graphs.values():
+		graph.build_from_tilemap(tile_map)
+	
+	#dim = cluster_graph.base_cell.dim.x
+	#pos = cluster_graph.base_cell.topleft
 
 func _unhandled_input(event: InputEvent) -> void:
 	if(event.is_action_pressed("ui_accept")):
 		var mouse_pos := get_global_mouse_position()
 		var coord := tile_map.world_to_map(mouse_pos)
-		set_start_cell_from_coord(coord)
+		set_start_coord(coord)
+		calculate_path()
 	
 	if(event.is_action_pressed("ui_cancel")):
 		var mouse_pos := get_global_mouse_position()
 		var coord := tile_map.world_to_map(mouse_pos)
-		set_end_cell_from_coord(coord)
+		set_end_coord(coord)
+		calculate_path()
+	
+	if(event.is_action_pressed("ui_1")):
+		if(current_graph != GRAPH_TYPE.RECTANGLES):
+			current_graph = GRAPH_TYPE.RECTANGLES
+			calculate_path()
+	
+	if(event.is_action_pressed("ui_2")):
+		if(current_graph != GRAPH_TYPE.QUADTREE):
+			current_graph = GRAPH_TYPE.QUADTREE
+			calculate_path()
+	
+	if(event.is_action_pressed("ui_3")):
+		if(current_graph != GRAPH_TYPE.NONE):
+			current_graph = GRAPH_TYPE.NONE
+			calculate_path()
 
-func set_start_cell_from_coord(coordv: Vector2):
-	var cell: NavQuadTree.QuadCell = quad_tree.get_cluster_containing_coord(coordv)
-	if(cell.traversable):
-		start_cell = cell
-		if(start_cell && end_cell && start_cell != end_cell):
-			path = AStarClusters.A_Star(start_cell, end_cell)
-		update()
+func set_start_coord(coordv: Vector2):
+	start_coord = coordv
+	
+func set_end_coord(coordv: Vector2):
+	end_coord = coordv
 
-func set_end_cell_from_coord(coordv: Vector2):
-	var cell: NavQuadTree.QuadCell = quad_tree.get_cluster_containing_coord(coordv)
-	if(cell.traversable):
-		end_cell = cell
-		if(start_cell && end_cell && start_cell != end_cell):
-			path = AStarClusters.A_Star(start_cell, end_cell)
-		update()
+func calculate_path():
+	start_cluster = null
+	end_cluster = null
+	cluster_path = []
+	if(start_coord != null && end_coord != null && start_coord != end_coord):
+		start_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(start_coord)
+		end_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(end_coord)
+		
+		if(start_cluster != null && end_cluster != null):
+			cluster_path = AStarClusters.run(start_cluster, end_cluster)
+	update()
 
 func _draw() -> void:
-	draw_rect(Rect2(pos*tile_dim, Vector2.ONE*dim*tile_dim), Color(0,0,0,1), false, 1.2)
+	#draw_rect(Rect2(pos*tile_dim, Vector2.ONE*dim*tile_dim), Color(0,0,0,1), false, 1.2)
 	
-	for key in quad_tree.leaf_cells.keys():
-		var cell : NavQuadTree.QuadCell = quad_tree.leaf_cells[key]
+	var highlight := Color.green
+	highlight.a = 0.25
+	
+	for key in cluster_graphs[current_graph].get_clusters_dict().keys():
+		# draw all clusters
+		var cluster : NavCluster = cluster_graphs[current_graph].get_cluster(key)
+		var rect = Rect2(cluster.topleft*tile_dim, Vector2.ONE*cluster.dim*tile_dim)
+		draw_rect(rect, Color.green, false, 1)
 		
-		var rect = Rect2(cell.topleft*tile_dim, Vector2.ONE*cell.dim*tile_dim)
-		var color := Color.green
-		if(!cell.traversable):
-			color = Color.red
-		
-		var cell_center = (cell.topleft + Vector2.ONE*cell.dim/2) * tile_dim 
-		for neighbor in cell.neighbors:
+		# draw cluster neighbor connections
+		var cluster_center = (cluster.topleft + Vector2.ONE*cluster.dim/2) * tile_dim 
+		for neighbor in cluster.neighbors:
 			var neighbor_center = (neighbor.topleft + Vector2.ONE*neighbor.dim/2) * tile_dim 
-			draw_line(cell_center, neighbor_center ,Color.blue ,1.2)
-		
-		# highlight start and end cells
-		draw_rect(rect, color, false, 1)
-		if(cell == start_cell):
-			color.a = 0.5
-			draw_rect(rect, color, true)
-		elif(cell == end_cell):
-			color = Color.red
-			color.a=0.5
-			draw_rect(rect, color, true)
+			draw_line(cluster_center, neighbor_center ,Color.blue ,1.2)
 	
-	if(path != null && path.size() >= 2):
+	if(cluster_path != null && cluster_path.size() >= 2):
+		# highlight path clusters
+		for i in range(cluster_path.size()):
+			draw_rect(Rect2(cluster_path[i].topleft*tile_dim, Vector2.ONE*cluster_path[i].dim*tile_dim), highlight, true)
+	else:
+		# highlight start and end clusters if there is no path calculated yet
+		if(start_cluster):
+			var rect = Rect2(start_cluster.topleft*tile_dim, Vector2.ONE*start_cluster.dim*tile_dim)
+			draw_rect(rect, highlight, true)
+		if(end_cluster && end_cluster != start_cluster):
+			var rect = Rect2(end_cluster.topleft*tile_dim, Vector2.ONE*end_cluster.dim*tile_dim)
+			draw_rect(rect, highlight, true)
+	
+	# highlight the start and end cell coordinates
+	if(start_coord):
+		draw_rect(Rect2(start_coord * tile_dim, tile_dim), Color.white, true)
+	if(end_coord):
+		draw_rect(Rect2(end_coord * tile_dim, tile_dim), Color.black, true)
+	
+	if(cluster_path != null && cluster_path.size() >= 2):
 		# draw path cell-center to cell-center
-		for i in range(path.size()-1):
-			var center_a = (path[i].topleft + path[i].dim/2) * tile_dim
-			var center_b = (path[i+1].topleft + path[i+1].dim/2) * tile_dim
+		for i in range(cluster_path.size()-1):
+			var center_a = (cluster_path[i].topleft + cluster_path[i].dim/2) * tile_dim
+			var center_b = (cluster_path[i+1].topleft + cluster_path[i+1].dim/2) * tile_dim
 			draw_line(center_a, center_b, Color.darkblue, 4)
 		
 		# draw path cell_edge to cell-edge (closer representation of eventual final path)
-		var last_point: Vector2 = (path[0].topleft + path[0].dim/2) * tile_dim
-		for i in range(path.size()):
-			if(i == path.size()-1):
-				var center_a = (path[i].topleft + path[i].dim/2) * tile_dim
-				draw_line(last_point, center_a, Color.darkmagenta, 4)
+		var last_point: Vector2 = (cluster_path[0].topleft + cluster_path[0].dim/2) * tile_dim
+		for i in range(cluster_path.size()):
+			if(i == cluster_path.size()-1):
+				var center_a = (cluster_path[i].topleft + cluster_path[i].dim/2) * tile_dim
+				draw_line(last_point, center_a, Color.darkmagenta, 3)
 			else:
-				var center_a = (path[i].topleft + path[i].dim/2) * tile_dim
-				var center_b = (path[i+1].topleft + path[i+1].dim/2) * tile_dim
-				var rect = Rect2(path[i].topleft*tile_dim, path[i].dim*tile_dim)
+				var center_a = (cluster_path[i].topleft + cluster_path[i].dim/2) * tile_dim
+				var center_b = (cluster_path[i+1].topleft + cluster_path[i+1].dim/2) * tile_dim
+				var rect = Rect2(cluster_path[i].topleft*tile_dim, cluster_path[i].dim*tile_dim)
 				var intersect = inner_line_to_rect_intersection(center_a, center_b, rect)
-				draw_line(last_point, intersect, Color.darkmagenta, 4)
+				draw_line(last_point, intersect, Color.darkmagenta, 3)
 				last_point = intersect
+
 
 # intersection between a line and a rect, where p0 of the line is inside the rect
 func inner_line_to_rect_intersection(p0: Vector2, p1: Vector2, rect: Rect2):

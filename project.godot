@@ -14,32 +14,44 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Scripts/AStarClusters.gd"
 }, {
+"base": "NavClusterGraph",
+"class": "FakeNavClusterGraph",
+"language": "GDScript",
+"path": "res://Scripts/FakeNavClusterGraph.gd"
+}, {
 "base": "Reference",
 "class": "NavCluster",
 "language": "GDScript",
 "path": "res://Scripts/NavCluster.gd"
 }, {
 "base": "Reference",
-"class": "NavClustersGraph",
+"class": "NavClusterGraph",
 "language": "GDScript",
-"path": "res://Scripts/NavClustersGraph.gd"
+"path": "res://Scripts/NavClusterGraph.gd"
 }, {
 "base": "Reference",
 "class": "NavGrid",
 "language": "GDScript",
 "path": "res://Scripts/NavGrid.gd"
 }, {
-"base": "Reference",
+"base": "NavClusterGraph",
 "class": "NavQuadTree",
 "language": "GDScript",
 "path": "res://Scripts/NavQuadTree.gd"
+}, {
+"base": "NavClusterGraph",
+"class": "NavRectExpansion",
+"language": "GDScript",
+"path": "res://Scripts/NavRectExpansion.gd"
 } ]
 _global_script_class_icons={
 "AStarClusters": "",
+"FakeNavClusterGraph": "",
 "NavCluster": "",
-"NavClustersGraph": "",
+"NavClusterGraph": "",
 "NavGrid": "",
-"NavQuadTree": ""
+"NavQuadTree": "",
+"NavRectExpansion": ""
 }
 
 [application]
@@ -73,6 +85,21 @@ ui_cancel={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777217,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":1,"pressure":0.0,"pressed":false,"script":null)
 , Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":2,"pressed":false,"doubleclick":false,"script":null)
+ ]
+}
+ui_1={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":49,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+ ]
+}
+ui_2={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":50,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+ ]
+}
+ui_3={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":51,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 
