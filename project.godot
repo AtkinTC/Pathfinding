@@ -14,10 +14,20 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Scripts/AStarClusters.gd"
 }, {
+"base": "AStar2D",
+"class": "AStarClustersV2",
+"language": "GDScript",
+"path": "res://Scripts/AStarClustersV2.gd"
+}, {
 "base": "Reference",
 "class": "AStarTileMap",
 "language": "GDScript",
 "path": "res://Scripts/AStarTileMap.gd"
+}, {
+"base": "AStar2D",
+"class": "AStarTileMapV2",
+"language": "GDScript",
+"path": "res://Scripts/AStarTileMapV2.gd"
 }, {
 "base": "NavClusterGraph",
 "class": "FakeNavClusterGraph",
@@ -56,7 +66,9 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "AStarClusters": "",
+"AStarClustersV2": "",
 "AStarTileMap": "",
+"AStarTileMapV2": "",
 "FakeNavClusterGraph": "",
 "InnerClusterNavigation": "",
 "NavCluster": "",
