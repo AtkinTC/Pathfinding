@@ -127,6 +127,10 @@ ui_3={
  ]
 }
 
+[network]
+
+limits/debugger_stdout/max_chars_per_second=1000000
+
 [physics]
 
 common/enable_pause_aware_picking=true

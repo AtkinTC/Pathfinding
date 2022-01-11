@@ -87,9 +87,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		calculate_path()
 
 func set_start_coord(coordv: Vector2):
+	print(str("start coord = ", coordv))
 	start_coord = coordv
 	
 func set_end_coord(coordv: Vector2):
+	print(str("end coord = ", coordv))
 	end_coord = coordv
 
 func calculate_path():
