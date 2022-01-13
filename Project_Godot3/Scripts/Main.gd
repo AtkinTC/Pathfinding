@@ -1,7 +1,6 @@
 extends Node2D
 
 onready var tile_map: TileMap = get_node("TileMap")
-onready var draw_node = get_node("DrawNode")
 
 var tile_dim: Vector2
 
@@ -45,8 +44,8 @@ func _ready() -> void:
 	#for graph in cluster_graphs.values():
 	#	graph.build_from_tilemap(tile_map)
 	
-func _process(delta: float) -> void:
-	for i in range(100):
+func _process(_delta: float) -> void:
+	for _i in range(100):
 		calculate_path()
 
 func _unhandled_input(event: InputEvent) -> void:

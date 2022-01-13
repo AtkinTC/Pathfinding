@@ -3,11 +3,11 @@ class_name FakeNavClusterGraph
 
 var single_giant_cluster: NavCluster
 
-func get_cluster_containing_coord(coordv: Vector2):
+func get_cluster_containing_coord(_coordv: Vector2):
 	return single_giant_cluster
 
-func get_cluster(id: String):
-	if(id == single_giant_cluster.id):
+func get_cluster(_id: String):
+	if(_id == single_giant_cluster.id):
 		return single_giant_cluster
 	return null
 

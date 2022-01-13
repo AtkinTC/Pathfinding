@@ -26,20 +26,20 @@ var base_cell: QuadCell
 
 var traversable_map_tiles = []
 
-func get_cluster(id: String):
-	return leaf_cells.get(id)
+func get_cluster(_id: String):
+	return leaf_cells.get(_id)
 
 func get_clusters_dict():
 	return clusters
 
-func get_cluster_containing_coord(coordv: Vector2):
+func get_cluster_containing_coord(_coordv: Vector2):
 	# check if the coord is contained in the tree
-	if(coordv.x < base_cell.topleft.x || coordv.x >= base_cell.topleft.x + base_cell.dim.x):
+	if(_coordv.x < base_cell.topleft.x || _coordv.x >= base_cell.topleft.x + base_cell.dim.x):
 		return null
-	if(coordv.y < base_cell.topleft.y|| coordv.y >= base_cell.topleft.y + base_cell.dim.y):
+	if(_coordv.y < base_cell.topleft.y|| _coordv.y >= base_cell.topleft.y + base_cell.dim.y):
 		return null
 	
-	return get_child_containing_coord(coordv, base_cell)
+	return get_child_containing_coord(_coordv, base_cell)
 
 func get_child_containing_coord(coordv: Vector2, cell: QuadCell):
 	if(cell.children == null || cell.children.size() == 0):
@@ -73,7 +73,12 @@ func get_child_containing_coord(coordv: Vector2, cell: QuadCell):
 	
 	return get_child_containing_coord(coordv, cell.children[direction])
 
-func build_from_tilemap(tilemap: TileMap):
+func build_from_tilemap(tilemap: TileMap, debug: bool = true):
+	if(debug):
+		print("NavQuadTree.build_from_tilemap()")
+	
+	var start_time = OS.get_ticks_msec()
+	
 	traversable_map_tiles = tilemap.get_used_cells()
 	var used_rect := tilemap.get_used_rect()
 	
@@ -96,6 +101,12 @@ func build_from_tilemap(tilemap: TileMap):
 				for n in neighbors:
 					if(n.traversable && !leaf.neighbors.has(n)):
 						leaf.neighbors.append(n)
+	
+	var end_time = OS.get_ticks_msec()
+	if(debug):
+		print(str("	starting cells = ", tilemap.get_used_cells().size()))
+		print(str("	total clusters = ", clusters.size()))
+		print(str("	total elapsed time (ms) = ", end_time - start_time))
 
 func process_cell(cell: QuadCell):
 	var traversable_found := false

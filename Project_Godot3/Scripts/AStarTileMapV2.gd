@@ -20,10 +20,10 @@ func add_points_from_tile_map(tile_map: TileMap):
 			if(tile_map.get_cell(x, y) >= 0):
 				var coordv := Vector2(x,y)
 				var id = coord_to_id(coordv)
-				connect_points(id, coord_to_id(coordv + Vector2.UP))
-				connect_points(id, coord_to_id(coordv + Vector2.DOWN))
-				connect_points(id, coord_to_id(coordv + Vector2.LEFT))
-				connect_points(id, coord_to_id(coordv + Vector2.RIGHT))
+				for direction in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+					var neighbor_id = coord_to_id(coordv + direction)
+					if(has_point(neighbor_id)):
+						connect_points(id, neighbor_id)
 
 func run(start: Vector2, goal: Vector2):
 	return get_point_path(coord_to_id(start), coord_to_id(goal))

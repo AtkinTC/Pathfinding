@@ -4,14 +4,17 @@ extends AStar2D
 func add_clusters(clusters: Array):
 	self.clear()
 	
-	reserve_space(clusters.size())
+	if(clusters.size() > self.get_point_capacity()):
+		reserve_space(clusters.size())
 	
 	for cluster in clusters:
 		add_point(coord_to_id(cluster.topleft), cluster.topleft + cluster.dim/2)
 	
 	for cluster in clusters:
 		for neighbor in cluster.neighbors:
-			connect_points(coord_to_id(cluster.topleft), coord_to_id(neighbor.topleft))
+			var neighbor_id = coord_to_id(neighbor.topleft)
+			if(has_point(neighbor_id)):
+				connect_points(coord_to_id(cluster.topleft), neighbor_id)
 
 func run(start: NavCluster, goal: NavCluster):
 	var path := [start]
