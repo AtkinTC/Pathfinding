@@ -14,6 +14,6 @@ func get_cluster(_id: String):
 func get_clusters_dict():
 	return {"":single_giant_cluster}
 
-func build_from_tilemap(tilemap: TileMap):
+func build_from_tilemap(tilemap: TileMap, print_array = null):
 	var rect := tilemap.get_used_rect()
 	single_giant_cluster = NavCluster.new("", rect.position, rect.size)

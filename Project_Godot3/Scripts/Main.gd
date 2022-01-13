@@ -25,6 +25,8 @@ var end_cluster: NavCluster
 
 var computed_cells := []
 
+onready var ui: UI = get_node("UI")
+
 func _ready() -> void:
 	tile_dim = tile_map.get_cell_size()
 	tile_map.show_behind_parent = true
@@ -34,7 +36,9 @@ func _ready() -> void:
 	cluster_graphs[GRAPH_TYPE.NONE] = FakeNavClusterGraph.new()
 	
 	for type in cluster_graphs.keys():
-		cluster_graphs[type].build_from_tilemap(tile_map)
+		var print_array := []
+		cluster_graphs[type].build_from_tilemap(tile_map, print_array)
+		ui.print_lines(print_array)
 		astar_cluster_v2s[type] = AStarClustersV2.new()
 		astar_cluster_v2s[type].add_clusters(cluster_graphs[type].get_clusters_dict().values())
 	
@@ -86,11 +90,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		calculate_path()
 
 func set_start_coord(coordv: Vector2):
-	print(str("start coord = ", coordv))
+	ui.print_line(str("start coord = ", coordv))
 	start_coord = coordv
 	
 func set_end_coord(coordv: Vector2):
-	print(str("end coord = ", coordv))
+	ui.print_line(str("end coord = ", coordv))
 	end_coord = coordv
 
 func calculate_path():

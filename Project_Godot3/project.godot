@@ -63,6 +63,16 @@ _global_script_classes=[ {
 "class": "NavRectExpansion",
 "language": "GDScript",
 "path": "res://Scripts/NavRectExpansion.gd"
+}, {
+"base": "Control",
+"class": "UI",
+"language": "GDScript",
+"path": "res://Scripts/UI.gd"
+}, {
+"base": "Reference",
+"class": "Utils",
+"language": "GDScript",
+"path": "res://Scripts/Utils.gd"
 } ]
 _global_script_class_icons={
 "AStarClusters": "",
@@ -75,7 +85,9 @@ _global_script_class_icons={
 "NavClusterGraph": "",
 "NavGrid": "",
 "NavQuadTree": "",
-"NavRectExpansion": ""
+"NavRectExpansion": "",
+"UI": "",
+"Utils": ""
 }
 
 [application]
