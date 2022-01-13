@@ -101,11 +101,12 @@ func build_from_tilemap(tilemap: TileMap, print_array = null):
 	
 	var end_time = OS.get_ticks_msec()
 	if(print_array is Array):
+		print_array.append("#############")
 		print_array.append("NavQuadTree.build_from_tilemap()")
 		print_array.append(str("\tstarting cells = ", tilemap.get_used_cells().size()))
 		print_array.append(str("\ttotal clusters = ", clusters.size()))
 		print_array.append(str("\ttotal elapsed time (ms) = ", end_time - start_time))
-		print_array.append("")
+		print_array.append("#############")
 
 func process_cell(cell: QuadCell):
 	var traversable_found := false

@@ -1,72 +1,32 @@
 class_name AStarTileMap
+extends AStar2D
 
-# basic A* for a purely TileMap based navigation
-# hastily put together and not optimized in any way
-static func run(start: Vector2, goal: Vector2, tile_map: TileMap, computed_cells_array = null):
-	if(start == goal):
-		return [goal]
+func add_points_from_tile_map(tile_map: TileMap):
+	self.clear()
 	
-	# A Star
-	var open_set := [start]
-	var came_from := {}
+	var minv := tile_map.get_used_rect().position
+	var maxv := minv + tile_map.get_used_rect().size
 	
-	if(computed_cells_array == []):
-		computed_cells_array.append(start)
+	reserve_space(tile_map.get_used_cells().size())
 	
-	# g_score[n] is the current cheapest path from start to n
-	var g_score := {start: 0}
+	for x in range(minv.x, maxv.x):
+		for y in range(minv.y, maxv.y):
+			if(tile_map.get_cell(x, y) >= 0):
+				var coordv := Vector2(x,y)
+				add_point(coord_to_id(coordv), coordv)
 	
-	# f_score[n] = g_score[n] + h(n)
-	# best guess at to the shortest path going through n
-	var f_score := {start: distance_between_cardinal(start, goal)}
-	
-	while(open_set.size() > 0):
-		# assume open_set is sorted by f_score
-		var current: Vector2 = open_set[0]
-		if(current == goal):
-			return reconstruct_path(came_from, current)
-		
-		open_set.remove(0)
-		var neighbors := [current+Vector2.UP, current+Vector2.DOWN, current+Vector2.LEFT, current+Vector2.RIGHT]
-		for neighbor in neighbors:
-			if(tile_map.get_cell(neighbor.x, neighbor.y) == -1):
-				continue
-			computed_cells_array.append(neighbor)
-			var tentative_g_score = g_score[current] + distance_between_cardinal(current, neighbor)
-			if(tentative_g_score < g_score.get(neighbor, INF)):
-				came_from[neighbor] = current
-				g_score[neighbor] = tentative_g_score
-				f_score[neighbor] = tentative_g_score + distance_between_cardinal(neighbor, goal)
-				if(!open_set.has(neighbor)):
-					if(open_set.size() == 0):
-						open_set.append(neighbor)
-					else:
-						# insert neighbor into the open_set sorted by f_score ascending
-						for i in range(open_set.size()+1):
-							if(i >= open_set.size()):
-								open_set.append(neighbor)
-								break
-							if(f_score[neighbor] < f_score[open_set[i]]):
-								open_set.insert(i, neighbor)
-								break
-	
-	#never reached goal
-	return []
+	for x in range(minv.x, maxv.x):
+		for y in range(minv.y, maxv.y):
+			if(tile_map.get_cell(x, y) >= 0):
+				var coordv := Vector2(x,y)
+				var id = coord_to_id(coordv)
+				for direction in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+					var neighbor_id = coord_to_id(coordv + direction)
+					if(has_point(neighbor_id)):
+						connect_points(id, neighbor_id)
 
-static func reconstruct_path(came_from: Dictionary, current: Vector2):
-	var total_path := [current]
-	while(came_from.has(current)):
-		current = came_from[current]
-		total_path.push_front(current)
-	return total_path
-
-static func distance_between_cardinal(coord_a: Vector2, coord_b: Vector2):
-	return abs(coord_a.x-coord_b.x) + abs(coord_a.y-coord_b.y)
-
-static func distance_between_octile(coord_a: Vector2, coord_b: Vector2):
-	var delta_x = abs(coord_a.x-coord_b.x)
-	var delta_y = abs(coord_a.y-coord_b.y)
-	return 1.414 * min(delta_x, delta_y) + abs(delta_x-delta_y)
+func run(start: Vector2, goal: Vector2):
+	return get_point_path(coord_to_id(start), coord_to_id(goal))
 
 static func coord_to_id(coordv: Vector2):
 	# Cantor Pairing function

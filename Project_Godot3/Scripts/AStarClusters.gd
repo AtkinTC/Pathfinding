@@ -1,49 +1,42 @@
 class_name AStarClusters
+extends AStar2D
 
-static func run(start: NavCluster, goal: NavCluster):
-	var open_set := [start]
+func add_clusters(clusters: Array):
+	self.clear()
 	
-	var came_from := {}
+	if(clusters.size() > self.get_point_capacity()):
+		reserve_space(clusters.size())
 	
-	# g_score[n] is the current cheapest path from start to n
-	var g_score := {start.id: 0}
+	for cluster in clusters:
+		add_point(coord_to_id(cluster.topleft), cluster.topleft + cluster.dim/2)
 	
-	# f_score[n] = g_score[n] + h(n)
-	# best guess at to the shortest path going through n
-	var f_score := {start.id: start.distance_to_octile(goal)}
-	
-	while(open_set.size() > 0):
-		# assume open_set is sorted by f_score
-		var current: NavCluster = open_set[0]
-		if(current == goal):
-			return reconstruct_path(came_from, current)
-		
-		open_set.remove(0)
-		for neighbor in current.neighbors:
-			var tentative_g_score = g_score[current.id] + current.distance_to_octile(neighbor)
-			if(tentative_g_score < g_score.get(neighbor.id, INF)):
-				came_from[neighbor.id] = current
-				g_score[neighbor.id] = tentative_g_score
-				f_score[neighbor.id] = tentative_g_score + neighbor.distance_to_octile(goal)
-				if(!open_set.has(neighbor)):
-					if(open_set.size() == 0):
-						open_set.append(neighbor)
-					else:
-						# insert neighbor into the open_set sorted by f_score ascending
-						for i in range(open_set.size()+1):
-							if(i >= open_set.size()):
-								open_set.append(neighbor)
-								break
-							if(f_score[neighbor.id] < f_score[open_set[i].id]):
-								open_set.insert(i, neighbor)
-								break
-	
-	#never reached goal
-	return null
+	for cluster in clusters:
+		for neighbor in cluster.neighbors:
+			var neighbor_id = coord_to_id(neighbor.topleft)
+			if(has_point(neighbor_id)):
+				connect_points(coord_to_id(cluster.topleft), neighbor_id)
 
-static func reconstruct_path(came_from: Dictionary, current: NavCluster):
-	var total_path := [current]
-	while(came_from.has(current.id)):
-		current = came_from[current.id]
-		total_path.push_front(current)
-	return total_path
+func run(start: NavCluster, goal: NavCluster):
+	var path := [start]
+	var ids := get_id_path(coord_to_id(start.topleft), coord_to_id(goal.topleft))
+	
+	for i in range(1, ids.size()):
+		var topleft = id_to_coord(ids[i])
+		for neighbor in path[i-1].neighbors:
+			if(neighbor.topleft == topleft):
+				path.append(neighbor)
+				break
+				
+	return path
+
+static func coord_to_id(coordv: Vector2):
+	# Cantor Pairing function
+	return (coordv.x + coordv.y) * (coordv.x + coordv.y + 1)/2 + coordv.y
+
+static func id_to_coord(id: int):
+	# Inverted Cantor Pairing function
+	var w = floor((sqrt(8*id+1) - 1)/2)
+	var t = (pow(w,2) + w)/2
+	var y = id - t
+	var x = w - y
+	return Vector2(x,y)

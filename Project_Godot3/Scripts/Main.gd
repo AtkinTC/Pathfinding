@@ -6,8 +6,6 @@ var tile_dim: Vector2
 
 enum GRAPH_TYPE{RECTANGLES, QUADTREE, NONE}
 
-var version: int = 2
-
 var cluster_graphs := {}
 var cluster_path := []
 var inner_cluster_paths := {}
@@ -15,7 +13,7 @@ var current_graph = GRAPH_TYPE.RECTANGLES
 
 var astar_cluster_v2s := {}
 
-var astar_tilemap_v2: AStarTileMapV2
+var astar_tilemap_v2: AStarTileMap
 
 var start_coord: Vector2 = Vector2(-1,-1)
 var end_coord: Vector2 = Vector2(-1,-1)
@@ -31,101 +29,118 @@ func _ready() -> void:
 	tile_dim = tile_map.get_cell_size()
 	tile_map.show_behind_parent = true
 	
-	cluster_graphs[GRAPH_TYPE.RECTANGLES] = NavRectExpansion.new()
-	cluster_graphs[GRAPH_TYPE.QUADTREE] = NavQuadTree.new()
-	cluster_graphs[GRAPH_TYPE.NONE] = FakeNavClusterGraph.new()
+	switch_mode(GRAPH_TYPE.RECTANGLES)
 	
-	for type in cluster_graphs.keys():
-		var print_array := []
-		cluster_graphs[type].build_from_tilemap(tile_map, print_array)
-		ui.print_lines(print_array)
-		astar_cluster_v2s[type] = AStarClustersV2.new()
-		astar_cluster_v2s[type].add_clusters(cluster_graphs[type].get_clusters_dict().values())
-	
-	astar_tilemap_v2 = AStarTileMapV2.new()
+	astar_tilemap_v2 = AStarTileMap.new()
 	astar_tilemap_v2.add_points_from_tile_map(tile_map)
 	
-	#for graph in cluster_graphs.values():
-	#	graph.build_from_tilemap(tile_map)
-	
+var cooldown: float = 5
+var cd: float = 0
+
 func _process(_delta: float) -> void:
-	for _i in range(100):
-		calculate_path()
+	if(cd <= 0):
+		batch_path_calculation_test(100)
+		cd = cooldown
+	else:
+		cd -= _delta
+
+func batch_path_calculation_test(runs: int):
+	var start_time = OS.get_ticks_msec()
+	
+	var pathfinding_was_run := true
+	for _i in range(runs):
+		pathfinding_was_run = calculate_path()
+		if(!pathfinding_was_run):
+			break
+		
+	var end_time = OS.get_ticks_msec()
+	if(pathfinding_was_run):
+		ui.print_line(str("duration of ", runs, " calls (ms) = ", end_time - start_time))
+
+func trigger_path_calculation():
+	var print_array := []
+	print_array.append(str("start = ", start_coord, ", end = ", end_coord))
+	calculate_path(print_array)
+	ui.print_lines(print_array)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if(event.is_action_pressed("ui_accept")):
 		var mouse_pos := get_global_mouse_position()
 		var coord := tile_map.world_to_map(mouse_pos)
 		set_start_coord(coord)
-		calculate_path()
+		trigger_path_calculation()
 	
 	if(event.is_action_pressed("ui_cancel")):
 		var mouse_pos := get_global_mouse_position()
 		var coord := tile_map.world_to_map(mouse_pos)
 		set_end_coord(coord)
-		calculate_path()
+		trigger_path_calculation()
 	
 	if(event.is_action_pressed("ui_1")):
 		if(current_graph != GRAPH_TYPE.RECTANGLES):
-			current_graph = GRAPH_TYPE.RECTANGLES
-			version = 2
-		else:
-			version = (version % 2) + 1	
-		calculate_path()
+			switch_mode(GRAPH_TYPE.RECTANGLES)
+		trigger_path_calculation()
 	
 	if(event.is_action_pressed("ui_2")):
 		if(current_graph != GRAPH_TYPE.QUADTREE):
-			current_graph = GRAPH_TYPE.QUADTREE
-			version = 2
-		else:
-			version = (version % 2) + 1	
-		calculate_path()
+			switch_mode(GRAPH_TYPE.QUADTREE)
+		trigger_path_calculation()
 	
 	if(event.is_action_pressed("ui_3")):
 		if(current_graph != GRAPH_TYPE.NONE):
-			current_graph = GRAPH_TYPE.NONE
-			version = 2
-		else:
-			version = (version % 2) + 1	
-		calculate_path()
+			switch_mode(GRAPH_TYPE.NONE)
+		trigger_path_calculation()
+
+func switch_mode(graph_type: int):
+	if(graph_type in GRAPH_TYPE.values()):
+		current_graph = graph_type
+		if(graph_type == GRAPH_TYPE.RECTANGLES):
+			cluster_graphs[GRAPH_TYPE.RECTANGLES] = NavRectExpansion.new()
+			
+		elif(graph_type == GRAPH_TYPE.QUADTREE):
+			cluster_graphs[GRAPH_TYPE.QUADTREE] = NavQuadTree.new()
+			
+		elif(graph_type == GRAPH_TYPE.NONE):
+			cluster_graphs[GRAPH_TYPE.NONE] = FakeNavClusterGraph.new()
+		
+		var print_array := []
+		cluster_graphs[graph_type].build_from_tilemap(tile_map, print_array)
+		ui.print_lines(print_array)
+		astar_cluster_v2s[graph_type] = AStarClusters.new()
+		astar_cluster_v2s[graph_type].add_clusters(cluster_graphs[graph_type].get_clusters_dict().values())
 
 func set_start_coord(coordv: Vector2):
-	ui.print_line(str("start coord = ", coordv))
 	start_coord = coordv
 	
 func set_end_coord(coordv: Vector2):
-	ui.print_line(str("end coord = ", coordv))
 	end_coord = coordv
 
-func calculate_path():
+func calculate_path(print_array = null):
 	start_cluster = null
 	end_cluster = null
 	cluster_path = []
 	inner_cluster_paths = {}
 	computed_cells = []
+	update()
 	if(start_coord != Vector2(-1,-1) && end_coord != Vector2(-1,-1) && start_coord != end_coord):
 		start_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(start_coord)
 		end_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(end_coord)
 		
 		if(start_cluster != null && end_cluster != null):
-			if(version == 1):
-				cluster_path = AStarClusters.run(start_cluster, end_cluster)
-			elif(version == 2):
-				cluster_path = astar_cluster_v2s[current_graph].run(start_cluster, end_cluster)
+			cluster_path = astar_cluster_v2s[current_graph].run(start_cluster, end_cluster)
+		
+		var tiles_length: int = 0
 		
 		if(cluster_path.size() == 1):
 			var cluster = cluster_path[0]
 			var path := []
 			if(current_graph == GRAPH_TYPE.NONE):
-				if(version == 1):
-					# Normal A* without clusters
-					path = AStarTileMap.run(start_coord, end_coord, tile_map, computed_cells)
-				elif(version == 2):
-					path = astar_tilemap_v2.run(start_coord, end_coord)
+				path = astar_tilemap_v2.run(start_coord, end_coord)
 			else:
 				# Simple navigation across rectangular clusters
 				path = InnerClusterNavigation.run(start_coord, end_coord, Rect2(cluster.topleft, cluster.dim))
 			inner_cluster_paths[cluster_path[0].id] = path
+			tiles_length = path.size()
 			
 		elif(cluster_path.size() > 1):
 			for i in range(cluster_path.size()):
@@ -146,17 +161,19 @@ func calculate_path():
 				
 				var path := []
 				if(current_graph == GRAPH_TYPE.NONE):
-					if(version == 1):
-						# Normal A* without clusters
-						path = AStarTileMap.run(start_coord, end_coord, tile_map, computed_cells)
-					elif(version == 2):
-						path = astar_tilemap_v2.run(start_coord, end_coord)
+					path = astar_tilemap_v2.run(start_coord, end_coord)
 				else:
 					# Simple navigation across rectangular clusters
 					path = InnerClusterNavigation.run(point_a, point_b, Rect2(cluster.topleft, cluster.dim))
 				inner_cluster_paths[cluster_path[i].id] = path
+				tiles_length += path.size()
 		
-	update()
+		if(print_array is Array):
+			print_array.append(str("# of clusters in path = ", cluster_path.size()))
+			print_array.append(str("# of tiles in path = ", tiles_length))
+		return true
+	else:
+		return false
 
 func _draw() -> void:
 	var highlight := Color.green
