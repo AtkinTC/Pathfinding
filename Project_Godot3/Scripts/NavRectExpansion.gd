@@ -207,7 +207,6 @@ func expand_rect_from_coord(cellv: Vector2, open_cells: Array):
 					break
 			if(expand_w):
 				w += 1
-	
 	return Rect2(cellv.x-w, cellv.y-n, e+w+1, s+n+1)
 
 func find_neighbors(cluster: NavCluster):

@@ -11,5 +11,5 @@ func get_cluster(_id: String):
 func get_clusters_dict():
 	return null
 
-func build_from_tilemap(_tilemap: TileMap):
+func build_from_tilemap(_tilemap: TileMap, print_array = null):
 	return null

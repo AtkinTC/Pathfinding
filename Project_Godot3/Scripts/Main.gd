@@ -4,24 +4,22 @@ onready var tile_map: TileMap = get_node("TileMap")
 
 var tile_dim: Vector2
 
-enum GRAPH_TYPE{RECTANGLES, QUADTREE, NONE}
+enum GRAPH_TYPE{RECTANGLES, QUADTREE, CHUNK, TILEMAP}
 
 var cluster_graphs := {}
 var cluster_path := []
-var inner_cluster_paths := {}
+var tiles_path := []
 var current_graph = GRAPH_TYPE.RECTANGLES
 
-var astar_cluster_v2s := {}
+var astar_cluster := {}
 
-var astar_tilemap_v2: AStarTileMap
+var astar_tilemap: AStarTileMap
 
 var start_coord: Vector2 = Vector2(-1,-1)
 var end_coord: Vector2 = Vector2(-1,-1)
 
 var start_cluster: NavCluster
 var end_cluster: NavCluster
-
-var computed_cells := []
 
 onready var ui: UI = get_node("UI")
 
@@ -31,18 +29,39 @@ func _ready() -> void:
 	
 	switch_mode(GRAPH_TYPE.RECTANGLES)
 	
-	astar_tilemap_v2 = AStarTileMap.new()
-	astar_tilemap_v2.add_points_from_tile_map(tile_map)
-	
-var cooldown: float = 5
-var cd: float = 0
+	astar_tilemap = AStarTileMap.new()
+	astar_tilemap.add_points_from_tile_map(tile_map)
 
-func _process(_delta: float) -> void:
-	if(cd <= 0):
+func _unhandled_input(event: InputEvent) -> void:
+	if(event.is_action_pressed("ui_select")):
+		var mouse_pos := get_global_mouse_position()
+		var coord := tile_map.world_to_map(mouse_pos)
+		set_start_coord(coord)
+		trigger_path_calculation()
+	
+	if(event.is_action_pressed("ui_cancel")):
+		var mouse_pos := get_global_mouse_position()
+		var coord := tile_map.world_to_map(mouse_pos)
+		set_end_coord(coord)
+		trigger_path_calculation()
+	
+	if(event.is_action_pressed("ui_accept")):
 		batch_path_calculation_test(100)
-		cd = cooldown
-	else:
-		cd -= _delta
+	
+	if(event.is_action_pressed("ui_1")):
+		if(current_graph != GRAPH_TYPE.RECTANGLES):
+			switch_mode(GRAPH_TYPE.RECTANGLES)
+		trigger_path_calculation()
+	
+	if(event.is_action_pressed("ui_2")):
+		if(current_graph != GRAPH_TYPE.QUADTREE):
+			switch_mode(GRAPH_TYPE.QUADTREE)
+		trigger_path_calculation()
+	
+	if(event.is_action_pressed("ui_3")):
+		if(current_graph != GRAPH_TYPE.TILEMAP):
+			switch_mode(GRAPH_TYPE.TILEMAP)
+		trigger_path_calculation()
 
 func batch_path_calculation_test(runs: int):
 	var start_time = OS.get_ticks_msec()
@@ -63,34 +82,6 @@ func trigger_path_calculation():
 	calculate_path(print_array)
 	ui.print_lines(print_array)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if(event.is_action_pressed("ui_accept")):
-		var mouse_pos := get_global_mouse_position()
-		var coord := tile_map.world_to_map(mouse_pos)
-		set_start_coord(coord)
-		trigger_path_calculation()
-	
-	if(event.is_action_pressed("ui_cancel")):
-		var mouse_pos := get_global_mouse_position()
-		var coord := tile_map.world_to_map(mouse_pos)
-		set_end_coord(coord)
-		trigger_path_calculation()
-	
-	if(event.is_action_pressed("ui_1")):
-		if(current_graph != GRAPH_TYPE.RECTANGLES):
-			switch_mode(GRAPH_TYPE.RECTANGLES)
-		trigger_path_calculation()
-	
-	if(event.is_action_pressed("ui_2")):
-		if(current_graph != GRAPH_TYPE.QUADTREE):
-			switch_mode(GRAPH_TYPE.QUADTREE)
-		trigger_path_calculation()
-	
-	if(event.is_action_pressed("ui_3")):
-		if(current_graph != GRAPH_TYPE.NONE):
-			switch_mode(GRAPH_TYPE.NONE)
-		trigger_path_calculation()
-
 func switch_mode(graph_type: int):
 	if(graph_type in GRAPH_TYPE.values()):
 		current_graph = graph_type
@@ -100,14 +91,14 @@ func switch_mode(graph_type: int):
 		elif(graph_type == GRAPH_TYPE.QUADTREE):
 			cluster_graphs[GRAPH_TYPE.QUADTREE] = NavQuadTree.new()
 			
-		elif(graph_type == GRAPH_TYPE.NONE):
-			cluster_graphs[GRAPH_TYPE.NONE] = FakeNavClusterGraph.new()
+		elif(graph_type == GRAPH_TYPE.TILEMAP):
+			cluster_graphs[GRAPH_TYPE.TILEMAP] = FakeNavClusterGraph.new()
 		
 		var print_array := []
 		cluster_graphs[graph_type].build_from_tilemap(tile_map, print_array)
 		ui.print_lines(print_array)
-		astar_cluster_v2s[graph_type] = AStarClusters.new()
-		astar_cluster_v2s[graph_type].add_clusters(cluster_graphs[graph_type].get_clusters_dict().values())
+		astar_cluster[graph_type] = AStarClusters.new()
+		astar_cluster[graph_type].add_clusters(cluster_graphs[graph_type].get_clusters_dict().values())
 
 func set_start_coord(coordv: Vector2):
 	start_coord = coordv
@@ -119,38 +110,26 @@ func calculate_path(print_array = null):
 	start_cluster = null
 	end_cluster = null
 	cluster_path = []
-	inner_cluster_paths = {}
-	computed_cells = []
+	tiles_path = []
 	update()
 	if(start_coord != Vector2(-1,-1) && end_coord != Vector2(-1,-1) && start_coord != end_coord):
 		start_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(start_coord)
 		end_cluster = cluster_graphs[current_graph].get_cluster_containing_coord(end_coord)
 		
 		if(start_cluster != null && end_cluster != null):
-			cluster_path = astar_cluster_v2s[current_graph].run(start_cluster, end_cluster)
+			cluster_path = astar_cluster[current_graph].run(start_cluster, end_cluster)
 		
-		var tiles_length: int = 0
-		
-		if(cluster_path.size() == 1):
-			var cluster = cluster_path[0]
+		for i in range(cluster_path.size()):
+			var cluster = cluster_path[i]
 			var path := []
-			if(current_graph == GRAPH_TYPE.NONE):
-				path = astar_tilemap_v2.run(start_coord, end_coord)
+			if(current_graph == GRAPH_TYPE.TILEMAP):
+				path = astar_tilemap.run(start_coord, end_coord)
 			else:
-				# Simple navigation across rectangular clusters
-				path = InnerClusterNavigation.run(start_coord, end_coord, Rect2(cluster.topleft, cluster.dim))
-			inner_cluster_paths[cluster_path[0].id] = path
-			tiles_length = path.size()
-			
-		elif(cluster_path.size() > 1):
-			for i in range(cluster_path.size()):
-				var cluster = cluster_path[i]
-				
 				var point_a: Vector2
 				if(i == 0):
 					point_a = start_coord
 				else:
-					point_a = inner_cluster_paths[cluster_path[i-1].id][-1]
+					point_a = tiles_path[-1]
 				
 				var point_b: Vector2
 				if(i >= cluster_path.size()-2):
@@ -159,18 +138,12 @@ func calculate_path(print_array = null):
 					var cluster_n: NavCluster = cluster_path[i+1]
 					point_b = cluster_path[i+1].topleft + Vector2(floor(cluster_n.dim.x/2),floor(cluster_n.dim.y/2))
 				
-				var path := []
-				if(current_graph == GRAPH_TYPE.NONE):
-					path = astar_tilemap_v2.run(start_coord, end_coord)
-				else:
-					# Simple navigation across rectangular clusters
-					path = InnerClusterNavigation.run(point_a, point_b, Rect2(cluster.topleft, cluster.dim))
-				inner_cluster_paths[cluster_path[i].id] = path
-				tiles_length += path.size()
+				path = InnerClusterNavigation.run(point_a, point_b, Rect2(cluster.topleft, cluster.dim))
+			tiles_path.append_array(path)
 		
 		if(print_array is Array):
 			print_array.append(str("# of clusters in path = ", cluster_path.size()))
-			print_array.append(str("# of tiles in path = ", tiles_length))
+			print_array.append(str("# of tiles in path = ", tiles_path.size()))
 		return true
 	else:
 		return false
@@ -185,19 +158,9 @@ func _draw() -> void:
 	var highlight3 := Color.red
 	highlight3.a = 0.25
 	
-	var inner_paths_joined = []
-	for cluster in cluster_path:
-		var inner_path: Array = inner_cluster_paths[cluster.id]
-		inner_paths_joined.append_array(inner_path)
-	
 	# highlight the individual map tiles that are touched by the route
-	for cell in inner_paths_joined:
+	for cell in tiles_path:
 			draw_rect(Rect2(cell * tile_dim, tile_dim), highlight2, true)
-	
-	# highlight the computed cells (when available)
-#	for cell in computed_cells:
-#		if(!inner_paths_joined.has(cell)):
-#			draw_rect(Rect2(cell * tile_dim, tile_dim), highlight3, true)
 	
 	for key in cluster_graphs[current_graph].get_clusters_dict().keys():
 		# draw all clusters
@@ -211,7 +174,7 @@ func _draw() -> void:
 			var neighbor_center = (neighbor.topleft + Vector2.ONE*neighbor.dim/2) * tile_dim 
 			draw_line(cluster_center, neighbor_center ,Color.blue ,1.2)
 	
-	if(current_graph != GRAPH_TYPE.NONE):
+	if(current_graph != GRAPH_TYPE.TILEMAP):
 		if(cluster_path != null && cluster_path.size() >= 2):
 			# highlight path clusters
 			for i in range(cluster_path.size()):
@@ -248,39 +211,14 @@ func _draw() -> void:
 				var center_a = (cluster_path[i].topleft + cluster_path[i].dim/2) * tile_dim
 				var center_b = (cluster_path[i+1].topleft + cluster_path[i+1].dim/2) * tile_dim
 				var rect = Rect2(cluster_path[i].topleft*tile_dim, cluster_path[i].dim*tile_dim)
-				var intersect = inner_line_to_rect_intersection(center_a, center_b, rect)
+				var intersect = Utils.inner_line_to_rect_intersection(center_a, center_b, rect)
 				draw_line(last_point, intersect, Color.darkmagenta, 3)
 				last_point = intersect
 	
 	# draw path map-tile to map-tile
-	for i in range(inner_paths_joined.size()-1):
-		var center_a: Vector2 = inner_paths_joined[i]*tile_dim + tile_dim/2
-		var center_b: Vector2 = inner_paths_joined[i+1]*tile_dim + tile_dim/2
+	for i in range(tiles_path.size()-1):
+		var center_a: Vector2 = tiles_path[i]*tile_dim + tile_dim/2
+		var center_b: Vector2 = tiles_path[i+1]*tile_dim + tile_dim/2
 		draw_line(center_a, center_b, Color.darkgreen, 3)
 
-# intersection between a line and a rect, where p0 of the line is inside the rect
-func inner_line_to_rect_intersection(p0: Vector2, p1: Vector2, rect: Rect2):
-	var v := p1 - p0
-	
-	var e := Vector2.ZERO
-	if(v.x > 0):
-		e.x = rect.position.x + rect.size.x
-	else:
-		e.x = rect.position.x
-	
-	if(v.y > 0):
-		e.y = rect.position.y + rect.size.y
-	else:
-		e.y = rect.position.y
-	
-	if(v.x == 0):
-		return Vector2(p0.x, e.y)
-	if(v.y == 0):
-		return Vector2(e.x, p0.y)
-	
-	var t = (e - p0)/v
-	
-	if(t.x <= t.y):
-		return Vector2(e.x, p0.y + t.x*v.y)
-	else:
-		return Vector2(p0.x + t.y*v.x, e.y)
+				
