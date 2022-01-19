@@ -54,6 +54,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Scripts/NavRectExpansion.gd"
 }, {
+"base": "Node",
+"class": "NavTestUnit",
+"language": "GDScript",
+"path": "res://Scripts/NavTestUnit.gd"
+}, {
 "base": "Control",
 "class": "UI",
 "language": "GDScript",
@@ -74,6 +79,7 @@ _global_script_class_icons={
 "NavGrid": "",
 "NavQuadTree": "",
 "NavRectExpansion": "",
+"NavTestUnit": "",
 "UI": "",
 "Utils": ""
 }

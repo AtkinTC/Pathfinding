@@ -24,7 +24,13 @@ var leaf_cells := {}
 var clusters := {}
 var base_cell: QuadCell
 
-var traversable_map_tiles = []
+var traversable_map_tiles := []
+
+func reset():
+	leaf_cells = {}
+	clusters = {}
+	traversable_map_tiles = []
+	base_cell = QuadCell.new("", Vector2.ZERO, Vector2.ZERO)
 
 func get_cluster(_id: String):
 	return leaf_cells.get(_id)

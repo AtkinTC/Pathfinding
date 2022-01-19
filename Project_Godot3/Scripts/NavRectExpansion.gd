@@ -4,6 +4,10 @@ extends NavClusterGraph
 var clusters := {}
 var parent_cluster := {}
 
+func reset():
+	clusters = {}
+	parent_cluster = {}
+
 func get_cluster(_id: String):
 	return clusters.get(_id)
 

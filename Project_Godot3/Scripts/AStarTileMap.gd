@@ -1,7 +1,8 @@
 class_name AStarTileMap
 extends AStar2D
 
-func add_points_from_tile_map(tile_map: TileMap):
+func build_points_from_tile_map(tile_map: TileMap, print_array = null):
+	var start_time = OS.get_ticks_msec()
 	self.clear()
 	
 	var minv := tile_map.get_used_rect().position
@@ -24,7 +25,13 @@ func add_points_from_tile_map(tile_map: TileMap):
 					var neighbor_id = coord_to_id(coordv + direction)
 					if(has_point(neighbor_id)):
 						connect_points(id, neighbor_id)
-
+						
+	var end_time = OS.get_ticks_msec()
+	if(print_array is Array):
+		print_array.append("AStarTileMap.build_points_from_tile_map()")
+		print_array.append(str("\ttilemap size = ", tile_map.get_used_rect().size))
+		print_array.append(str("\ttotal elapsed time (ms) = ", end_time - start_time))
+	
 func run(start: Vector2, goal: Vector2):
 	return get_point_path(coord_to_id(start), coord_to_id(goal))
 

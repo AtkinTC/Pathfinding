@@ -4,6 +4,7 @@ var id: String
 var neighbors: Array
 var topleft: Vector2
 var dim: Vector2
+var empty := true
 
 func _init(_id: String, _topleft: Vector2, _dim: Vector2, _neighbors: Array = []):
 	id = _id
