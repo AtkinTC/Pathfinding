@@ -51,6 +51,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if(current_graph != GRAPH_TYPE.TILEMAP):
 			switch_mode(GRAPH_TYPE.TILEMAP)
 		trigger_path_calculation()
+	
+	if(event.is_action_pressed("ui_4")):
+		if(current_graph != GRAPH_TYPE.CHUNK):
+			switch_mode(GRAPH_TYPE.CHUNK)
+		trigger_path_calculation()
 
 func batch_path_calculation_test(runs: int):
 	var start_time = OS.get_ticks_msec()
@@ -85,6 +90,9 @@ func switch_mode(graph_type: int):
 		elif(graph_type == GRAPH_TYPE.TILEMAP):
 			nav_test_units[GRAPH_TYPE.TILEMAP] = NavTestUnit.new()
 			nav_test_units[GRAPH_TYPE.TILEMAP].set_nav_graph(FakeNavClusterGraph.new())
+		
+		elif(graph_type == GRAPH_TYPE.CHUNK):
+			nav_test_units[GRAPH_TYPE.CHUNK] = NavChunksTestUnit.new()
 		
 		var print_array := []
 		nav_test_units[graph_type].set_tile_map(tile_map)

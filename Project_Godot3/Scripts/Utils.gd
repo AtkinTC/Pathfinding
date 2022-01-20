@@ -44,11 +44,11 @@ static func inner_line_to_rect_intersection(p0: Vector2, p1: Vector2, rect: Rect
 	else:
 		return Vector2(p0.x + t.y*v.x, e.y)
 
-static func coord_to_id(coordv: Vector2):
+static func coord_to_id(coordv: Vector2) -> int:
 	# Cantor Pairing function
-	return (coordv.x + coordv.y) * (coordv.x + coordv.y + 1)/2 + coordv.y
+	return ((coordv.x + coordv.y) * (coordv.x + coordv.y + 1)/2 + coordv.y) as int
 
-static func id_to_coord(id: int):
+static func id_to_coord(id: int) -> Vector2:
 	# Inverted Cantor Pairing function
 	var w = floor((sqrt(8*id+1) - 1)/2)
 	var t = (pow(w,2) + w)/2

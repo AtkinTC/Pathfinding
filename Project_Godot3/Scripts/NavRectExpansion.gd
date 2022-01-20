@@ -76,7 +76,6 @@ func build_from_tilemap(tilemap: TileMap, print_array = null):
 	var end_time = OS.get_ticks_msec()
 	
 	if(print_array is Array):
-		print_array.append("#############")
 		print_array.append("NavRectExpansions.build_from_tilemap()")
 		print_array.append(str("\tstarting cells = ", tilemap.get_used_cells().size()))
 		print_array.append(str("\ttotal clusters = ", clusters.size()))
@@ -84,7 +83,7 @@ func build_from_tilemap(tilemap: TileMap, print_array = null):
 		print_array.append(str("\tpre-calculation time (ms) = ", end_time_precalc - start_time_precalc))
 		print_array.append(str("\ttotal cluster calc time (ms) = ", end_time_calc - start_time_calc))
 		print_array.append(str("\tneighbor calc time (ms) = ", end_time_neighbors - start_time_neighbors))
-		print_array.append("#############")
+		print_array.append("")
 
 # calculate a heuristic score for the cell
 # a higher score indicates this cell has a higher priority for cluster creation
