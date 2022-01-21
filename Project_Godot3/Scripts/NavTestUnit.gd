@@ -32,9 +32,12 @@ func build_graph(print_array = null):
 	astar_cluster = AStarClusters.new()
 	astar_cluster.add_clusters(nav_graph.get_clusters_dict().values())
 
-func run_navigation(_start_coord: Vector2, _end_coord: Vector2, print_array = null):
+func clear_navigation():
 	path_clusters = []
 	path_tiles = []
+
+func run_navigation(_start_coord: Vector2, _end_coord: Vector2, print_array = null):
+	clear_navigation()
 	if(_start_coord != _end_coord):
 		var start_cluster = nav_graph.get_cluster_containing_coord(_start_coord)
 		var end_cluster = nav_graph.get_cluster_containing_coord(_end_coord)

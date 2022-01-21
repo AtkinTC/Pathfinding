@@ -42,9 +42,12 @@ func build_graph(print_array = null):
 			if(astar_nodes.has_point(neighbor_id)):
 				astar_nodes.connect_points(id, neighbor_id)
 
-func run_navigation(_start_coord: Vector2, _end_coord: Vector2, print_array = null):
+func clear_navigation():
 	path_node_ids = []
 	path_tiles = []
+
+func run_navigation(_start_coord: Vector2, _end_coord: Vector2, print_array = null):
+	clear_navigation()
 	if(_start_coord == _end_coord):
 		return false
 		

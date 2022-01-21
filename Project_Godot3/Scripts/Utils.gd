@@ -1,5 +1,7 @@
 class_name Utils
 
+enum GRAPH_TYPE{RECTANGLES, QUADTREE, CHUNK, TILEMAP}
+
 # create a 2d array of the navigable tiles for improved performance
 static func tilemap_to_array2d(tilemap: TileMap) -> Array:
 	var used_rect := tilemap.get_used_rect()
