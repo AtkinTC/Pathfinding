@@ -51,14 +51,14 @@ func run_navigation(_start_coord: Vector2, _end_coord: Vector2, print_array = nu
 	if(_start_coord == _end_coord):
 		return false
 		
-	var start_chunk_id = nav_graph.get_chunk_id_containing_coord(_start_coord)
-	var end_chunk_id = nav_graph.get_chunk_id_containing_coord(_end_coord)
+	var start_chunk_id: Vector2 = nav_graph.get_chunk_id_containing_coord(_start_coord)
+	var end_chunk_id: Vector2 = nav_graph.get_chunk_id_containing_coord(_end_coord)
 	
 	if(start_chunk_id == null || end_chunk_id == null):
 		return false
 	
-	var start_node_id = nav_graph.get_chunk(start_chunk_id).get_closest_inner_node_id(_start_coord)
-	var end_node_id = nav_graph.get_chunk(end_chunk_id).get_closest_inner_node_id(_end_coord)
+	var start_node_id: int = nav_graph.get_chunk(start_chunk_id).get_closest_inner_node_id(_start_coord)
+	var end_node_id: int = nav_graph.get_chunk(end_chunk_id).get_closest_inner_node_id(_end_coord)
 	
 	if(start_node_id == null || end_node_id == null):
 		return false
@@ -108,15 +108,20 @@ func draw(node: Node, tile_dim: Vector2) -> void:
 		var chunk: NavChunksGraph.Chunk = nav_graph.get_chunks_dict()[chunk_id]
 		node.draw_rect(Rect2(chunk.topleft*tile_dim, nav_graph.get_chunk_size()*tile_dim), Color.white, false)
 	
-	for id in nav_graph.nodes_graph.get_node_ids():
-		var i_node: NavChunksGraph.InnerNode = nav_graph.nodes_graph.get_node(id)
+	var drawn_node_ids = []
+	
+	for i_node in nav_graph.nodes_graph.get_nodes():
+		#var i_node: NavChunksGraph.InnerNode = nav_graph.nodes_graph.get_node(id)
 		var mid: Vector2 = (i_node.pos + Vector2(0.5, 0.5)) * tile_dim
 		node.draw_circle(mid, tile_dim.x/3, Color(1,0,0,0.5))
 		
-		for n_id in nav_graph.nodes_graph.get_connections(id):
-			var n_node: NavChunksGraph.InnerNode = nav_graph.nodes_graph.get_node(n_id)
-			var n_mid: Vector2 = (n_node.pos + Vector2(0.5, 0.5)) * tile_dim
-			node.draw_line(mid, n_mid, Color(1,0,0,1), 1.1)
+		for n_id in nav_graph.nodes_graph.get_connections(i_node.id):
+			if(!drawn_node_ids.has(n_id)):
+				var n_node: NavChunksGraph.InnerNode = nav_graph.nodes_graph.get_node(n_id)
+				var n_mid: Vector2 = (n_node.pos + Vector2(0.5, 0.5)) * tile_dim
+				node.draw_line(mid, n_mid, Color(1,0,0,1), 1.1)
+			
+		drawn_node_ids.append(i_node.id)
 	
 	# draw path map-tile to map-tile
 	for i in range(path_tiles.size()-1):
