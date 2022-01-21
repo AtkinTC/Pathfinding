@@ -2,6 +2,11 @@ class_name Utils
 
 enum GRAPH_TYPE{RECTANGLES, QUADTREE, CHUNK, TILEMAP}
 
+const MAPS = {
+	"Map_Rooms_122x89" : "res://Maps/Map_Rooms_122x89.tscn",
+	"Map_Rooms_245x179" :"res://Maps/Map_Rooms_245x179.tscn"
+}
+
 # create a 2d array of the navigable tiles for improved performance
 static func tilemap_to_array2d(tilemap: TileMap) -> Array:
 	var used_rect := tilemap.get_used_rect()

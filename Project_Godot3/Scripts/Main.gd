@@ -1,6 +1,7 @@
 extends Node2D
 
 onready var tile_map: TileMap = get_node("TileMap")
+onready var tile_map_path: String = tile_map.filename
 
 var tile_dim: Vector2
 
@@ -16,7 +17,6 @@ onready var ui: UI = get_node("UI")
 func _ready() -> void:
 	tile_dim = tile_map.get_cell_size()
 	tile_map.show_behind_parent = true
-	
 	build_graph()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -54,6 +54,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		if(current_graph != Utils.GRAPH_TYPE.CHUNK):
 			switch_mode(Utils.GRAPH_TYPE.CHUNK)
 		trigger_path_calculation()
+
+func set_map(map_key: String):
+	var new_tile_map_path = Utils.MAPS.get(map_key)
+	if(new_tile_map_path == null):
+		return false
+	if(new_tile_map_path == tile_map_path):
+		return false
+	
+	var new_tile_map = load(new_tile_map_path).instance()
+	if(new_tile_map is TileMap):
+		remove_child(tile_map)
+		tile_map = new_tile_map
+		add_child(tile_map)
+		move_child(tile_map, 0)
+		tile_dim = tile_map.get_cell_size()
+		tile_map.show_behind_parent = true
+		
+		nav_test_units = {}
+		set_start_coord(-Vector2.ONE)
+		set_end_coord(-Vector2.ONE)
+		build_graph()
 
 func batch_path_calculation_test(runs: int):
 	var start_time = OS.get_ticks_msec()
@@ -153,3 +174,6 @@ func _on_UI_trigger_clear_navigation() -> void:
 	set_start_coord(-Vector2.ONE)
 	set_end_coord(-Vector2.ONE)
 	calculate_path()
+	
+func _on_UI_map_selection(map_key: String) -> void:
+	set_map(map_key)

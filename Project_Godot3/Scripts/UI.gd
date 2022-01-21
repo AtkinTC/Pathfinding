@@ -2,13 +2,15 @@ extends Control
 class_name UI
 
 onready var text_display: RichTextLabel = get_node("UIPanel/VBoxContainer/ColorRect/TextDisplay")
-onready var graph_type_selection: OptionButton = get_node("UIPanel/VBoxContainer/PanelContainer/GraphTypeSelection")
-onready var nav_batch_size: SpinBox = get_node("UIPanel/VBoxContainer/PanelContainer/HBoxContainer/NavBatchSizeInput")
+onready var graph_type_selection: OptionButton = get_node("UIPanel/VBoxContainer/PanelContainer/GraphTypeContainer/GraphTypeSelection")
+onready var nav_batch_size: SpinBox = get_node("UIPanel/VBoxContainer/PanelContainer/RunNavContainer/NavBatchSizeInput")
+onready var map_selection: OptionButton = get_node("UIPanel/VBoxContainer/PanelContainer/MapSelectionContainer2/MapSelection")
 
 signal trigger_rebuild
 signal graph_type_selection
 signal trigger_navigation_batch
 signal trigger_clear_navigation
+signal map_selection
 
 func _ready():
 	clear_text()
@@ -16,6 +18,10 @@ func _ready():
 	graph_type_selection.clear()
 	for key in Utils.GRAPH_TYPE.keys():
 		graph_type_selection.add_item(key, Utils.GRAPH_TYPE[key])
+	
+	map_selection.clear()
+	for key in Utils.MAPS.keys():
+		map_selection.add_item(key)
 
 func clear_text():
 	text_display.text = ""
@@ -42,3 +48,6 @@ func _on_RunNavBatch_pressed() -> void:
 
 func _on_ClearNav_pressed() -> void:
 	emit_signal("trigger_clear_navigation")
+
+func _on_MapSelection_item_selected(index: int) -> void:
+	emit_signal("map_selection", Utils.MAPS.keys()[index])
