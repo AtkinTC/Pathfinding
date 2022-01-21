@@ -18,7 +18,12 @@ class Chunk:
 		inner_nodes[inner_node.id] = inner_node
 	
 	func get_closest_inner_node_id(coordv: Vector2):
-		return closest_node_map.get(coordv)
+		if(inner_nodes.size() == 0):
+			return null
+		elif(inner_nodes.size() == 1):
+			return inner_nodes.keys()[0]
+		else:
+			return closest_node_map.get(coordv)
 
 class InnerNode:
 	var id: int
